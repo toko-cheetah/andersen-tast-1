@@ -3,14 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\RegisterRequest;
-use App\Models\User;
+use App\Services\UserService;
 use Illuminate\Http\Response;
 
 class AuthController extends Controller
 {
+    protected $userService;
+
+    public function __construct(UserService $userService)
+    {
+        $this->userService = $userService;
+    }
+
     public function register(RegisterRequest $request)
     {
-        $user = User::create($request->validated());
+        $user = $this->userService->store($request->validated());
 
         $token = $user->createToken('User Passport Token')->accessToken;
 
