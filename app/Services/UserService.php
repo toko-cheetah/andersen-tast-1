@@ -2,8 +2,12 @@
 
 namespace App\Services;
 
+use App\Mail\ForgotPasswordMail;
 use App\Models\ResetPassword;
 use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Mail\SentMessage;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class UserService
@@ -35,5 +39,28 @@ class UserService
     public function deleteToken(ResetPassword $resetPassword): Bool
     {
         return $resetPassword->delete();
+    }
+
+    public function ForgotPasswordMailSend(string $email, string $token): void
+    {
+        Mail::to($email)->send(new ForgotPasswordMail($email, $token));
+    }
+
+    public function passwordIsUpdated(array $data): Bool
+    {
+        $tokenData = ResetPassword::where('token', $data['token'])->first();
+
+        $tokenCreatedAt = Carbon::parse($tokenData->created_at);
+        $currentDateTime = Carbon::now();
+
+        $this->deleteToken($tokenData);
+
+        if ($tokenCreatedAt->diffInMinutes($currentDateTime) < 120) {
+            $this->resetPassword($tokenData, $data['password']);
+
+            return true;
+        } else {
+            return false;
+        }
     }
 }

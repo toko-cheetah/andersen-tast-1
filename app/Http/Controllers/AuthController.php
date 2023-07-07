@@ -54,7 +54,7 @@ class AuthController extends Controller
         $tokenData = $this->userService->forgotPassword($user);
 
         try {
-            Mail::to($user->email)->send(new ForgotPasswordMail($user->email, $tokenData->token));
+            $this->userService->ForgotPasswordMailSend($user->email, $tokenData->token);
 
             return response()->json(['message' => 'Email sent'], Response::HTTP_OK);
         } catch (\Throwable $th) {
@@ -64,19 +64,13 @@ class AuthController extends Controller
 
     public function resetPassword(ResetPasswordRequest $request): JsonResponse
     {
-        $tokenData = ResetPassword::where('token', $request->token)->first();
+        $passwordIsUpdated = $this->userService->passwordIsUpdated($request->validated());
 
-        $tokenCreatedAt = Carbon::parse($tokenData->created_at);
-        $currentDateTime = Carbon::now();
-
-        $this->userService->deleteToken($tokenData);
-
-        if ($tokenCreatedAt->diffInMinutes($currentDateTime) < 120) {
-            $this->userService->resetPassword($tokenData, $request->password);
-
+        if ($passwordIsUpdated) {
             return response()->json(['message' => 'Password updated'], Response::HTTP_CREATED);
         } else {
             return response()->json(['message' => 'Token is outdated'], Response::HTTP_BAD_REQUEST);
         }
+
     }
 }
