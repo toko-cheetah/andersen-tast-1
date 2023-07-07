@@ -2,10 +2,15 @@
 
 namespace Tests\Feature;
 
+use App\Mail\ForgotPasswordMail;
+use App\Models\ResetPassword;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
+use Illuminate\Support\Str;
 
 class AuthTest extends TestCase
 {
@@ -156,5 +161,126 @@ class AuthTest extends TestCase
         ]);
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    public function test_forgot_password_input_email_is_required()
+    {
+        $response = $this->postJson('/api/forgot-password');
+        $response->assertJsonValidationErrors(['email']);
+    }
+
+    public function test_forgot_password_email_is_in_correct_format()
+    {
+        $response = $this->postJson('/api/forgot-password', [
+            'email' => 'someone-email.com',
+        ]);
+        $response->assertJsonValidationErrors(['email' => 'The email field must be a valid email address']);
+    }
+
+    public function test_forgot_password_email_exists()
+    {
+        $response = $this->postJson('/api/forgot-password', [
+            'email' => $this->userData['email'],
+            'password' => $this->userData['password'],
+        ]);
+        $response->assertJsonValidationErrors(['email' => 'The selected email is invalid']);
+    }
+
+    public function test_forgot_password_mail_is_sent()
+    {
+        Mail::fake();
+
+        $user = User::factory()->create();
+
+        $response = $this->postJson('/api/forgot-password', [
+            'email' => $user->email,
+        ]);
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJson(['message' => 'Email sent']);
+        Mail::assertSent(ForgotPasswordMail::class, function (ForgotPasswordMail $mail) use ($user) {
+            return $mail->hasTo($user->email);
+        });
+    }
+
+    public function test_forgot_password_mail_has_essential_content()
+    {
+        $user = User::factory()->create();
+        $token = Str::random(60);
+
+        $mailable = new ForgotPasswordMail($user->email, $token);
+
+        $mailable->assertHasSubject('Password Reset');
+        $mailable->assertSeeInText('Password Reset');
+    }
+
+    public function test_reset_password_input_fields_are_required()
+    {
+        $response = $this->postJson('/api/reset-password');
+        $response->assertJsonValidationErrors(['token', 'password']);
+    }
+
+    public function test_reset_password_token_exists()
+    {
+        $token = Str::random(60);
+
+        $response = $this->postJson('/api/reset-password', [
+            'token' => $token,
+        ]);
+        $response->assertJsonValidationErrors(['token' => 'The selected token is invalid']);
+    }
+
+    public function test_reset_password_password_contains_min_6_symbols()
+    {
+        $response = $this->postJson('/api/reset-password', [
+            'password' => '12345',
+        ]);
+        $response->assertJsonValidationErrors(['password' => 'The password field must be at least 6 characters']);
+    }
+
+    public function test_reset_password_password_is_confirmed()
+    {
+        $response = $this->postJson('/api/reset-password', [
+            'password' => '123456',
+            'password_confirmation' => '123457',
+        ]);
+        $response->assertJsonValidationErrors(['password' => 'The password field confirmation does not match']);
+    }
+
+    public function test_reset_password_response_status_is_created()
+    {
+        $user = User::factory()->create();
+        $resetPassword = ResetPassword::factory()->create(['user_id' => $user->id]);
+
+        $response = $this->postJson('/api/reset-password', [
+            'token' => $resetPassword->token,
+            'password' => '123456',
+            'password_confirmation' => '123456',
+        ]);
+
+        $response->assertStatus(Response::HTTP_CREATED);
+        $response->assertJson(['message' => 'Password updated']);
+    }
+
+    public function test_reset_password_response_status_is_400_when_token_is_outdated()
+    {
+        $user = User::factory()->create();
+
+        $currentDateTime = Carbon::now();
+        $threeHoursAgo = $currentDateTime->subHours(3);
+
+        $resetPassword = ResetPassword::factory()->create([
+            'user_id' => $user->id,
+            'created_at' => $threeHoursAgo
+        ]);
+
+        $response = $this->postJson('/api/reset-password', [
+            'token' => $resetPassword->token,
+            'password' => '123456',
+            'password_confirmation' => '123456',
+        ]);
+
+        $response->assertStatus(Response::HTTP_BAD_REQUEST);
+        $response->assertJson(['message' => 'Token is outdated']);
     }
 }
