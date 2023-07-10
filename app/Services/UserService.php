@@ -6,7 +6,6 @@ use App\Mail\ForgotPasswordMail;
 use App\Models\ResetPassword;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Mail\SentMessage;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -62,5 +61,11 @@ class UserService
         } else {
             return false;
         }
+    }
+
+    public function updateEmail(User $user, string $email): void
+    {
+        $user->email = $email;
+        $user->save();
     }
 }
