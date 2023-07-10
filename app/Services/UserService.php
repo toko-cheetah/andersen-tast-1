@@ -63,19 +63,9 @@ class UserService
         }
     }
 
-    public function emailIsUpdated(object $user, array $data): Bool
+    public function updateEmail(User $user, string $email): void
     {
-        $targetUser = User::where('email', $data['email'])->first();
-
-        $canUpdate = $user->can('update', $targetUser);
-
-        if ($canUpdate) {
-            $user->email = $data['new_email'];
-            $user->save();
-
-            return true;
-        } else {
-            return false;
-        }
+        $user->email = $email;
+        $user->save();
     }
 }

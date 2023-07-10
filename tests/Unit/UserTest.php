@@ -69,14 +69,11 @@ class UserTest extends TestCase
 
     public function test_email_is_updated()
     {
-        $request = [
-            'email' => $this->user->email,
-            'new_email' => 'newemail@mail.com',
-        ];
+        $email = 'newemail@mail.com';
 
-        $this->userService->emailIsUpdated($this->user, $request);
+        $this->userService->updateEmail($this->user, $email);
         $this->assertDatabaseHas('users', [
-            'email' => $request['new_email']
+            'email' => $email
         ]);
     }
 }

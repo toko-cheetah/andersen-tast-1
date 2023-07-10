@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UserUpdateRequest;
+use App\Models\User;
 use App\Services\UserService;
 use Illuminate\Http\Response;
 
@@ -17,16 +18,10 @@ class UserController extends Controller
         $this->userService = $userService;
     }
 
-    public function update(UserUpdateRequest $request): JsonResponse
+    public function update(UserUpdateRequest $request, User $user): JsonResponse
     {
-        $user = $request->user();
+        $this->userService->updateEmail($user, $request->email);
 
-        $emailIsUpdated = $this->userService->emailIsUpdated($user, $request->validated());
-
-        if ($emailIsUpdated) {
-            return response()->json(null, Response::HTTP_NO_CONTENT);
-        } else {
-            return response()->json(["message" => 'You do not own this email'], Response::HTTP_BAD_REQUEST);
-        }
+        return response()->json($user, Response::HTTP_OK);
     }
 }

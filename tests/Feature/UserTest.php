@@ -20,7 +20,7 @@ class UserTest extends TestCase
 
     public function test_unauthorized_user_can_not_update()
     {
-        $response = $this->putJson(route('user.update'));
+        $response = $this->putJson(route('user.update', ['user' => '5']));
         $response->assertStatus(Response::HTTP_UNAUTHORIZED);
         $response->assertJsonPath('message', 'Unauthenticated.');
     }
@@ -31,46 +31,30 @@ class UserTest extends TestCase
         $user = User::factory()->create();
         Passport::actingAs($user);
 
-        $response = $this->putJson(route('user.update'));
-        $response->assertJsonValidationErrors(['email', 'new_email']);
+        $response = $this->putJson(route('user.update', ['user' => $user->id]));
+        $response->assertJsonValidationErrors(['email']);
     }
 
-    public function test_user_update_emails_are_in_correct_format()
+    public function test_user_update_email_is_in_correct_format()
     {
         $user = User::factory()->create();
         Passport::actingAs($user);
 
-        $response = $this->putJson(route('user.update'), [
+        $response = $this->putJson(route('user.update', ['user' => $user->id]), [
             'email' => 'someone-email.com',
-            'new_email' => 'sometwo-email.com'
         ]);
-        $response->assertJsonValidationErrors([
-            'email' => 'The email field must be a valid email address',
-            'new_email' => 'The new email field must be a valid email address',
-        ]);
+        $response->assertJsonValidationErrors(['email' => 'The email field must be a valid email address']);
     }
 
-    public function test_user_update_email_exists()
+    public function test_user_update_email_is_unique()
     {
         $user = User::factory()->create();
         Passport::actingAs($user);
 
-        $response = $this->putJson(route('user.update'), [
-            'email' => 'someone@email.com',
-        ]);
-        $response->assertJsonValidationErrors(['email' => 'The selected email is invalid']);
-    }
-
-    public function test_user_update_new_email_is_unique()
-    {
-        $user = User::factory()->create();
-        Passport::actingAs($user);
-
-        $response = $this->putJson(route('user.update'), [
+        $response = $this->putJson(route('user.update', ['user' => $user->id]), [
             'email' => $user->email,
-            'new_email' => $user->email,
         ]);
-        $response->assertJsonValidationErrors(['new_email' => 'The new email has already been taken']);
+        $response->assertJsonValidationErrors(['email' => 'The email has already been taken']);
     }
 
     public function test_user_can_update_only_their_email()
@@ -79,25 +63,22 @@ class UserTest extends TestCase
         $anotherUser = User::factory()->create();
         Passport::actingAs($user);
 
-        $response = $this->putJson(route('user.update'), [
-            'email' => $anotherUser->email,
-            'new_email' => 'newemail@mail.com',
+        $response = $this->putJson(route('user.update', ['user' => $anotherUser->id]), [
+            'email' => 'newemail@mail.com'
         ]);
 
-        $response->assertStatus(Response::HTTP_BAD_REQUEST);
-        $response->assertJson(['message' => 'You do not own this email']);
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
 
-    public function test_user_email_updated_response_status_is_204()
+    public function test_user_email_updated_response_status_is_200()
     {
         $user = User::factory()->create();
         Passport::actingAs($user);
 
-        $response = $this->putJson(route('user.update'), [
-            'email' => $user->email,
-            'new_email' => 'newemail@mail.com',
+        $response = $this->putJson(route('user.update', ['user' => $user->id]), [
+            'email' => 'newemail@mail.com',
         ]);
 
-        $response->assertStatus(Response::HTTP_NO_CONTENT);
+        $response->assertStatus(Response::HTTP_OK);
     }
 }
