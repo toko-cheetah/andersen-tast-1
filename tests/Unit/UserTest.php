@@ -66,4 +66,17 @@ class UserTest extends TestCase
 
         $this->assertDatabaseMissing('reset_passwords', [$this->resetPassword]);
     }
+
+    public function test_email_is_updated()
+    {
+        $request = [
+            'email' => $this->user->email,
+            'new_email' => 'newemail@mail.com',
+        ];
+
+        $this->userService->emailIsUpdated($this->user, $request);
+        $this->assertDatabaseHas('users', [
+            'email' => $request['new_email']
+        ]);
+    }
 }

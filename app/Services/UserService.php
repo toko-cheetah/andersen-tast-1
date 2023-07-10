@@ -6,7 +6,6 @@ use App\Mail\ForgotPasswordMail;
 use App\Models\ResetPassword;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Mail\SentMessage;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -57,6 +56,22 @@ class UserService
 
         if ($tokenCreatedAt->diffInMinutes($currentDateTime) < 120) {
             $this->resetPassword($tokenData, $data['password']);
+
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public function emailIsUpdated(object $user, array $data): Bool
+    {
+        $targetUser = User::where('email', $data['email'])->first();
+
+        $canUpdate = $user->can('update', $targetUser);
+
+        if ($canUpdate) {
+            $user->email = $data['new_email'];
+            $user->save();
 
             return true;
         } else {

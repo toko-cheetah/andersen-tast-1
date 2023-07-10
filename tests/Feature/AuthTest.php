@@ -29,13 +29,13 @@ class AuthTest extends TestCase
 
     public function test_register_input_fields_are_required()
     {
-        $response = $this->postJson('/api/auth/register');
+        $response = $this->postJson(route('register'));
         $response->assertJsonValidationErrors(['email', 'password']);
     }
 
     public function test_register_email_is_in_correct_format()
     {
-        $response = $this->postJson('/api/auth/register', [
+        $response = $this->postJson(route('register'), [
             'email' => 'someone-email.com',
         ]);
         $response->assertJsonValidationErrors(['email' => 'The email field must be a valid email address']);
@@ -45,7 +45,7 @@ class AuthTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->postJson('/api/auth/register', [
+        $response = $this->postJson(route('register'), [
             'email' => $user->email,
         ]);
         $response->assertJsonValidationErrors(['email' => 'The email has already been taken']);
@@ -53,7 +53,7 @@ class AuthTest extends TestCase
 
     public function test_register_password_contains_min_6_symbols()
     {
-        $response = $this->postJson('/api/auth/register', [
+        $response = $this->postJson(route('register'), [
             'email' => $this->userData['email'],
             'password' => '12345',
         ]);
@@ -62,7 +62,7 @@ class AuthTest extends TestCase
 
     public function test_register_password_is_confirmed()
     {
-        $response = $this->postJson('/api/auth/register', [
+        $response = $this->postJson(route('register'), [
             'email' => $this->userData['email'],
             'password' => $this->userData['password'],
             'password_confirmation' => '123457',
@@ -72,7 +72,7 @@ class AuthTest extends TestCase
 
     public function test_register_response_has_token()
     {
-        $response = $this->postJson('/api/auth/register', [
+        $response = $this->postJson(route('register'), [
             'email' => $this->userData['email'],
             'password' => $this->userData['password'],
             'password_confirmation' => $this->userData['password'],
@@ -83,7 +83,7 @@ class AuthTest extends TestCase
 
     public function test_register_response_has_status_created()
     {
-        $response = $this->postJson('/api/auth/register', [
+        $response = $this->postJson(route('register'), [
             'email' => $this->userData['email'],
             'password' => $this->userData['password'],
             'password_confirmation' => $this->userData['password'],
@@ -94,13 +94,13 @@ class AuthTest extends TestCase
 
     public function test_login_input_fields_are_required()
     {
-        $response = $this->postJson('/api/auth/login');
+        $response = $this->postJson(route('login'));
         $response->assertJsonValidationErrors(['email', 'password']);
     }
 
     public function test_login_email_is_in_correct_format()
     {
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson(route('login'), [
             'email' => 'someone-email.com',
         ]);
         $response->assertJsonValidationErrors(['email' => 'The email field must be a valid email address']);
@@ -108,7 +108,7 @@ class AuthTest extends TestCase
 
     public function test_login_email_exists()
     {
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson(route('login'), [
             'email' => $this->userData['email'],
             'password' => $this->userData['password'],
         ]);
@@ -119,7 +119,7 @@ class AuthTest extends TestCase
     {
         User::factory()->create($this->userData);
 
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson(route('login'), [
             'email' => $this->userData['email'],
             'password' => $this->userData['password'],
         ]);
@@ -131,7 +131,7 @@ class AuthTest extends TestCase
     {
         User::factory()->create($this->userData);
 
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson(route('login'), [
             'email' => $this->userData['email'],
             'password' => $this->userData['password'],
         ]);
@@ -143,7 +143,7 @@ class AuthTest extends TestCase
     {
         User::factory()->create($this->userData);
 
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson(route('login'), [
             'email' => $this->userData['email'],
             'password' => '123457',
         ]);
@@ -155,7 +155,7 @@ class AuthTest extends TestCase
     {
         User::factory()->create($this->userData);
 
-        $response = $this->postJson('/api/auth/login', [
+        $response = $this->postJson(route('login'), [
             'email' => $this->userData['email'],
             'password' => '123457',
         ]);
@@ -165,13 +165,13 @@ class AuthTest extends TestCase
 
     public function test_forgot_password_input_email_is_required()
     {
-        $response = $this->postJson('/api/forgot-password');
+        $response = $this->postJson(route('password.forgot'));
         $response->assertJsonValidationErrors(['email']);
     }
 
     public function test_forgot_password_email_is_in_correct_format()
     {
-        $response = $this->postJson('/api/forgot-password', [
+        $response = $this->postJson(route('password.forgot'), [
             'email' => 'someone-email.com',
         ]);
         $response->assertJsonValidationErrors(['email' => 'The email field must be a valid email address']);
@@ -179,7 +179,7 @@ class AuthTest extends TestCase
 
     public function test_forgot_password_email_exists()
     {
-        $response = $this->postJson('/api/forgot-password', [
+        $response = $this->postJson(route('password.forgot'), [
             'email' => $this->userData['email'],
             'password' => $this->userData['password'],
         ]);
@@ -192,7 +192,7 @@ class AuthTest extends TestCase
 
         $user = User::factory()->create();
 
-        $response = $this->postJson('/api/forgot-password', [
+        $response = $this->postJson(route('password.forgot'), [
             'email' => $user->email,
         ]);
 
@@ -216,7 +216,7 @@ class AuthTest extends TestCase
 
     public function test_reset_password_input_fields_are_required()
     {
-        $response = $this->postJson('/api/reset-password');
+        $response = $this->postJson(route('password.reset'));
         $response->assertJsonValidationErrors(['token', 'password']);
     }
 
@@ -224,7 +224,7 @@ class AuthTest extends TestCase
     {
         $token = Str::random(60);
 
-        $response = $this->postJson('/api/reset-password', [
+        $response = $this->postJson(route('password.reset'), [
             'token' => $token,
         ]);
         $response->assertJsonValidationErrors(['token' => 'The selected token is invalid']);
@@ -232,7 +232,7 @@ class AuthTest extends TestCase
 
     public function test_reset_password_password_contains_min_6_symbols()
     {
-        $response = $this->postJson('/api/reset-password', [
+        $response = $this->postJson(route('password.reset'), [
             'password' => '12345',
         ]);
         $response->assertJsonValidationErrors(['password' => 'The password field must be at least 6 characters']);
@@ -240,7 +240,7 @@ class AuthTest extends TestCase
 
     public function test_reset_password_password_is_confirmed()
     {
-        $response = $this->postJson('/api/reset-password', [
+        $response = $this->postJson(route('password.reset'), [
             'password' => '123456',
             'password_confirmation' => '123457',
         ]);
@@ -252,7 +252,7 @@ class AuthTest extends TestCase
         $user = User::factory()->create();
         $resetPassword = ResetPassword::factory()->create(['user_id' => $user->id]);
 
-        $response = $this->postJson('/api/reset-password', [
+        $response = $this->postJson(route('password.reset'), [
             'token' => $resetPassword->token,
             'password' => '123456',
             'password_confirmation' => '123456',
@@ -274,7 +274,7 @@ class AuthTest extends TestCase
             'created_at' => $threeHoursAgo
         ]);
 
-        $response = $this->postJson('/api/reset-password', [
+        $response = $this->postJson(route('password.reset'), [
             'token' => $resetPassword->token,
             'password' => '123456',
             'password_confirmation' => '123456',
