@@ -20,7 +20,7 @@ class UserTest extends TestCase
 
     public function test_unauthorized_user_can_not_update()
     {
-        $response = $this->putJson(route('user.update', ['user' => '5']));
+        $response = $this->putJson(route('users.update', ['user' => '5']));
         $response->assertStatus(Response::HTTP_UNAUTHORIZED);
         $response->assertJsonPath('message', 'Unauthenticated.');
     }
@@ -31,7 +31,7 @@ class UserTest extends TestCase
         $user = User::factory()->create();
         Passport::actingAs($user);
 
-        $response = $this->putJson(route('user.update', ['user' => $user->id]));
+        $response = $this->putJson(route('users.update', ['user' => $user->id]));
         $response->assertJsonValidationErrors(['email']);
     }
 
@@ -40,7 +40,7 @@ class UserTest extends TestCase
         $user = User::factory()->create();
         Passport::actingAs($user);
 
-        $response = $this->putJson(route('user.update', ['user' => $user->id]), [
+        $response = $this->putJson(route('users.update', ['user' => $user->id]), [
             'email' => 'someone-email.com',
         ]);
         $response->assertJsonValidationErrors(['email' => 'The email field must be a valid email address']);
@@ -51,7 +51,7 @@ class UserTest extends TestCase
         $user = User::factory()->create();
         Passport::actingAs($user);
 
-        $response = $this->putJson(route('user.update', ['user' => $user->id]), [
+        $response = $this->putJson(route('users.update', ['user' => $user->id]), [
             'email' => $user->email,
         ]);
         $response->assertJsonValidationErrors(['email' => 'The email has already been taken']);
@@ -63,7 +63,7 @@ class UserTest extends TestCase
         $anotherUser = User::factory()->create();
         Passport::actingAs($user);
 
-        $response = $this->putJson(route('user.update', ['user' => $anotherUser->id]), [
+        $response = $this->putJson(route('users.update', ['user' => $anotherUser->id]), [
             'email' => 'newemail@mail.com'
         ]);
 
@@ -75,10 +75,51 @@ class UserTest extends TestCase
         $user = User::factory()->create();
         Passport::actingAs($user);
 
-        $response = $this->putJson(route('user.update', ['user' => $user->id]), [
+        $response = $this->putJson(route('users.update', ['user' => $user->id]), [
             'email' => 'newemail@mail.com',
         ]);
 
         $response->assertStatus(Response::HTTP_OK);
+    }
+
+    public function test_user_can_get_all_users_emails()
+    {
+        User::factory()->count(2)->create();
+        $user = User::factory()->create();
+        Passport::actingAs($user);
+
+        $response = $this->getJson(route('users.index'));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(['users']);
+        $response->assertJsonCount(3, 'users');
+    }
+
+    public function test_user_can_get_only_their_own_data()
+    {
+        $user = User::factory()->create();
+        $anotherUser = User::factory()->create();
+        Passport::actingAs($user);
+
+        $response = $this->getJson(route('users.get', ['user' => $anotherUser->id]));
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
+    public function test_user_get_own_data_response_status_is_200()
+    {
+        $user = User::factory()->create();
+        Passport::actingAs($user);
+
+        $response = $this->getJson(route('users.get', ['user' => $user->id]));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJson([
+            'data' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ]
+        ]);
     }
 }
