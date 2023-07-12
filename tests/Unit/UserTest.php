@@ -2,11 +2,13 @@
 
 namespace Tests\Unit;
 
+use App\Mail\DeleteUserMail;
 use App\Models\ResetPassword;
 use App\Models\User;
 use App\Services\UserService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class UserTest extends TestCase
@@ -75,5 +77,25 @@ class UserTest extends TestCase
         $this->assertDatabaseHas('users', [
             'email' => $email
         ]);
+    }
+
+    public function test_user_is_deleted()
+    {
+        $this->userService->deleteUser($this->user);
+        $this->assertDatabaseHas('users', [
+            'email' => $this->user->email,
+            'status' => User::INACTIVE
+        ]);
+    }
+
+    public function test_delete_user_mail_is_sent()
+    {
+        Mail::fake();
+
+        $this->userService->deleteUserMailSend($this->user);
+
+        Mail::assertSent(DeleteUserMail::class, function (DeleteUserMail $mail) {
+            return $mail->hasTo($this->user->email);
+        });
     }
 }

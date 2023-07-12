@@ -24,4 +24,13 @@ class UserController extends Controller
 
         return response()->json($user, Response::HTTP_OK);
     }
+
+    public function destroy(User $user): JsonResponse
+    {
+        $this->userService->checkPermission($user);
+        $this->userService->deleteUser($user);
+        $this->userService->deleteUserMailSend($user);
+
+        return response()->json($user, Response::HTTP_OK);
+    }
 }
