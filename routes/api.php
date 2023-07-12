@@ -25,6 +25,6 @@ Route::controller(AuthController::class)->group(function () {
 
 Route::group(['middleware' => 'auth:api', 'controller' => UserController::class], function () {
     Route::get('/users', 'index')->name('users.index');
-    Route::get('/users/{user}', 'get')->name('users.get');
+    Route::get('/users/{user}', 'view')->name('users.view');
     Route::put('/users/{user}', 'update')->name('users.update');
 });

@@ -101,7 +101,7 @@ class UserTest extends TestCase
         $anotherUser = User::factory()->create();
         Passport::actingAs($user);
 
-        $response = $this->getJson(route('users.get', ['user' => $anotherUser->id]));
+        $response = $this->getJson(route('users.view', ['user' => $anotherUser->id]));
 
         $response->assertStatus(Response::HTTP_FORBIDDEN);
     }
@@ -111,15 +111,13 @@ class UserTest extends TestCase
         $user = User::factory()->create();
         Passport::actingAs($user);
 
-        $response = $this->getJson(route('users.get', ['user' => $user->id]));
+        $response = $this->getJson(route('users.view', ['user' => $user->id]));
 
         $response->assertStatus(Response::HTTP_OK);
         $response->assertJson([
-            'data' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-            ]
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
         ]);
     }
 }
