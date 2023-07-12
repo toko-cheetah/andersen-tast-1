@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Mail\DeleteUserMail;
 use App\Mail\ForgotPasswordMail;
 use App\Models\ResetPassword;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -67,5 +69,18 @@ class UserService
     {
         $user->email = $email;
         $user->save();
+    }
+
+    public function deleteUser(User $user): void
+    {
+        $user->status = User::INACTIVE;
+        $user->save();
+
+        $this->deleteUserMailSend($user);
+    }
+
+    public function deleteUserMailSend(User $user): void
+    {
+        Mail::to($user->email)->send(new DeleteUserMail($user));
     }
 }
