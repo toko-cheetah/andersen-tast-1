@@ -81,7 +81,46 @@ class UserTest extends TestCase
 
         $response->assertStatus(Response::HTTP_OK);
     }
+  
+    public function test_user_can_get_all_users_emails()
+    {
+        User::factory()->count(2)->create();
+        $user = User::factory()->create();
+        Passport::actingAs($user);
 
+        $response = $this->getJson(route('users.index'));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJsonStructure(['users']);
+        $response->assertJsonCount(3, 'users');
+    }
+
+    public function test_user_can_get_only_their_own_data()
+    {
+        $user = User::factory()->create();
+        $anotherUser = User::factory()->create();
+        Passport::actingAs($user);
+
+        $response = $this->getJson(route('users.view', ['user' => $anotherUser->id]));
+
+        $response->assertStatus(Response::HTTP_FORBIDDEN);
+    }
+
+    public function test_user_get_own_data_response_status_is_200()
+    {
+        $user = User::factory()->create();
+        Passport::actingAs($user);
+
+        $response = $this->getJson(route('users.view', ['user' => $user->id]));
+
+        $response->assertStatus(Response::HTTP_OK);
+        $response->assertJson([
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+        ]);
+    }
+  
     public function test_user_can_delete_only_their_own_data()
     {
         $user = User::factory()->create();
