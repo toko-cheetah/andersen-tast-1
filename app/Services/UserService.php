@@ -75,6 +75,8 @@ class UserService
     {
         $user->status = User::INACTIVE;
         $user->save();
+
+        $this->deleteUserMailSend($user);
     }
 
     public function deleteUserMailSend(User $user): void

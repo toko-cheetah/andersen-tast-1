@@ -29,7 +29,6 @@ class UserController extends Controller
     public function destroy(UserDeleteRequest $request, User $user): JsonResponse
     {
         $this->userService->deleteUser($user);
-        $this->userService->deleteUserMailSend($user);
 
         return response()->json($user, Response::HTTP_OK);
     }
