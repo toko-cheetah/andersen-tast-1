@@ -22,4 +22,9 @@ Route::controller(AuthController::class)->group(function () {
     Route::post('/reset-password', 'resetPassword')->name('password.reset');
 });
 
-Route::put('/users/{user}', [UserController::class, 'update'])->middleware('auth:api')->name('user.update');
+
+Route::group(['middleware' => 'auth:api', 'controller' => UserController::class], function () {
+    Route::get('/users', 'index')->name('users.index');
+    Route::get('/users/{user}', 'view')->name('users.view');
+    Route::put('/users/{user}', 'update')->name('users.update');
+});
