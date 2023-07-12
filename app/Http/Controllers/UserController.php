@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\UserDeleteRequest;
 use App\Http\Requests\UserUpdateRequest;
 use App\Models\User;
 use App\Services\UserService;
@@ -25,9 +26,8 @@ class UserController extends Controller
         return response()->json($user, Response::HTTP_OK);
     }
 
-    public function destroy(User $user): JsonResponse
+    public function destroy(UserDeleteRequest $request, User $user): JsonResponse
     {
-        $this->userService->checkPermission($user);
         $this->userService->deleteUser($user);
         $this->userService->deleteUserMailSend($user);
 

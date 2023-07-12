@@ -71,12 +71,6 @@ class UserService
         $user->save();
     }
 
-    public function checkPermission(User $user): void
-    {
-        $authenticatedUser = auth()->user();
-        Gate::authorize('update', [$user, $authenticatedUser]);
-    }
-
     public function deleteUser(User $user): void
     {
         $user->status = User::INACTIVE;
